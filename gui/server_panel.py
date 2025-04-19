@@ -515,6 +515,21 @@ class ServerPanel(QWidget):
         
         if confirm == QMessageBox.Yes:
             try:
+                # Check for updates before restart
+                server_update_available = LastOasisManager.check_for_server_update()
+                if server_update_available:
+                    update_confirm = QMessageBox.question(
+                        self,
+                        "Server Update Available",
+                        "A server update is available. Do you want to update during restart?",
+                        QMessageBox.Yes | QMessageBox.No,
+                        QMessageBox.Yes
+                    )
+                    if update_confirm == QMessageBox.Yes:
+                        for widget in self.server_widgets:
+                            widget.updateStatus("Updating")
+                            self.send_discord_status(widget.tile_name, widget.server_id, "Restarting for Server Update")
+                
                 # Use 5 second delay between stopping and starting for stability
                 restart_success = LastOasisManager.restart_all_tiles(5)
                 
@@ -524,8 +539,8 @@ class ServerPanel(QWidget):
                 # Update all widgets with restarting status
                 for widget in self.server_widgets:
                     widget.updateStatus("Restarting")
-                    # Send Discord notification
-                    self.send_discord_status(widget.tile_name, widget.server_id, "Restarting")
+                    if not server_update_available:
+                        self.send_discord_status(widget.tile_name, widget.server_id, "Restarting")
                 
                 # Broadcast status update only once
                 self.statusUpdated.emit(status_data)
@@ -543,43 +558,62 @@ class ServerPanel(QWidget):
         """Handle check for updates button click
         
         Returns:
-            bool: True if mod update check was successful, False otherwise
+            bool: True if update check was successful, False otherwise
         """
         logger.info("Checking for updates")
         try:
+            # First check for server updates
+            server_update_available = LastOasisManager.check_for_server_update()
+            if server_update_available:
+                server_result = QMessageBox.question(
+                    self, 
+                    "Server Update Available",
+                    "A Last Oasis server update is available. Do you want to update now?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes
+                )
+                if server_result == QMessageBox.Yes:
+                    # Notify about server restart
+                    for widget in self.server_widgets:
+                        self.send_discord_status(widget.tile_name, widget.server_id, "Restarting for Server Update")
+                        widget.updateStatus("Updating")
+                    
+                    # Perform server update and restart
+                    status = LastOasisManager.restart_all_tiles(1)
+                    return status
+
+            # Then check for mod updates
             out_of_date, _ = LastOasisManager.check_mod_updates()
             if out_of_date:
-                result = QMessageBox.question(
+                mod_result = QMessageBox.question(
                     self, 
-                    "Updates Available",
+                    "Mod Updates Available",
                     f"Found {len(out_of_date)} mods that need updates. Do you want to update them now?",
                     QMessageBox.Yes | QMessageBox.No,
                     QMessageBox.Yes
                 )
-                if result == QMessageBox.Yes:
-                    # Restart to apply updates
-                    status = LastOasisManager.restart_all_tiles(1)
-                    # Update UI to reflect restart
-                    status_data = self.getServerStatusData()
+                if mod_result == QMessageBox.Yes:
+                    # Notify about mod update restart
                     for widget in self.server_widgets:
-                        widget.updateStatus("Restarting")
-                        self.send_discord_status(widget.tile_name, widget.server_id, "Restarting for Updates")
+                        self.send_discord_status(widget.tile_name, widget.server_id, "Restarting for Mod Updates")
+                        widget.updateStatus("Updating")
                     
-                    # Broadcast status
-                    self.statusUpdated.emit(status_data)
+                    # Perform mod update and restart
+                    status = LastOasisManager.restart_all_tiles(1)
                     return status
                 else:
                     QMessageBox.information(
                         self,
                         "Updates Skipped",
-                        "Update installation was skipped. Servers will continue running with current mod versions."
+                        "Update installation was skipped. Servers will continue running with current versions."
                     )
             else:
-                QMessageBox.information(
-                    self,
-                    "No Updates",
-                    "All mods are up to date."
-                )
+                if not server_update_available:
+                    QMessageBox.information(
+                        self,
+                        "No Updates",
+                        "All mods and server files are up to date."
+                    )
             return True
         except Exception as e:
             logger.error(f"Error checking for updates: {e}")

@@ -522,15 +522,52 @@ def handle_steamcmd_output(process, command_name):
 
 
 def restart_all_tiles(wait):
+    """
+    Restart all server tiles with proper update checking
+    
+    Args:
+        wait (int): Time to wait between stopping and starting servers
+        
+    Returns:
+        bool: True if restart was successful, False otherwise
+    """
     global wait_restart_time
     wait_restart_time = 0
-    stop_processes()
-    time.sleep(5)
-    update_game()
-    out_of_date, updated_mods_info = check_mod_updates()
-    download_mods(out_of_date, updated_mods_info)
-    time.sleep(wait)
-    start_processes()
+    
+    try:
+        # First check for server updates
+        server_update_needed = check_for_server_update()
+        
+        # Stop all processes
+        stop_processes()
+        time.sleep(5)  # Brief delay after stopping
+        
+        # If server update is needed, perform the update
+        if server_update_needed:
+            logger.info("Performing server update...")
+            if not update_game():
+                logger.error("Server update failed")
+                return False
+        
+        # Check for mod updates
+        out_of_date, updated_mods_info = check_mod_updates()
+        if out_of_date:
+            logger.info(f"Updating {len(out_of_date)} mods...")
+            download_mods(out_of_date, updated_mods_info)
+        
+        # Wait the specified time before restart
+        time.sleep(wait)
+        
+        # Start all processes
+        if not start_processes():
+            logger.error("Failed to start all processes after restart")
+            return False
+            
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error during restart_all_tiles: {e}")
+        return False
 
 
 def check_for_server_update():
