@@ -30,6 +30,7 @@ from gui.mod_panel import ModPanel
 from gui.config_panel import ConfigPanel
 from gui.log_panel import LogPanel
 from gui.admin_panel import AdminPanel
+from gui.discord_panel import DiscordPanel
 
 # Import existing functionality
 import LastOasisManager
@@ -88,12 +89,14 @@ class MainWindow(QMainWindow):
         self.config_panel = ConfigPanel()
         self.log_panel = LogPanel()
         self.admin_panel = AdminPanel()
+        self.discord_panel = DiscordPanel()
         
         self.tabs.addTab(self.server_panel, "Server Management")
         self.tabs.addTab(self.mod_panel, "Mod Management")
         self.tabs.addTab(self.config_panel, "Configuration")
         self.tabs.addTab(self.log_panel, "Logs")
         self.tabs.addTab(self.admin_panel, "Admin Messages")
+        self.tabs.addTab(self.discord_panel, "Discord Output")
         
         layout.addWidget(self.tabs)
         
@@ -166,6 +169,7 @@ class MainWindow(QMainWindow):
             self.config_panel.setConfig(self.config)
             self.log_panel.setConfig(self.config)
             self.admin_panel.setConfig(self.config)
+            self.discord_panel.setConfig(self.config)
             
             self.statusMsg.setText("Configuration loaded successfully")
             logger.info("Configuration loaded successfully")
@@ -468,4 +472,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 

@@ -6,8 +6,7 @@
     // API authentication keys
     "customer_key": "YOUR_CUSTOMER_KEY_HERE",
     "provider_key": "YOUR_PROVIDER_KEY_HERE",
-    // Discord webhook for server status notifications
-    "server_status_webhook": "YOUR_DISCORD_WEBHOOK_URL_HERE",
+    // Discord webhook URL is now consolidated in discord_webhook_url below
     // Path to Steam CMD installation
     "steam_cmd_path": "C:\\path\\to\\steamcmd\\",
     // Number of tiles to run
@@ -27,6 +26,15 @@
     // Server restart time in minutes
     "restart_time": 300,
     // Mod check interval in seconds
-    "mod_check_interval": 300
+    "mod_check_interval": 300,
+    // Discord webhook configuration
+    "discord_webhook_url": "YOUR_DISCORD_WEBHOOK_URL_HERE",
+    // Message types to send to Discord (true/false)
+    "discord_message_types": {
+        "chat": true,        // Player chat messages
+        "join": true,        // Player join notifications
+        "tile": true,        // Tile ready notifications
+        "kill": true,        // Kill feed messages
+        "server_status": true // Server status updates (running, stopped, starting, stopping)
+    }
 }
-

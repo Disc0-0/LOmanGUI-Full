@@ -444,7 +444,7 @@ def download_mods(workshop_ids, updated_mods_info):
                 if os.path.isdir(src_item):
                     shutil.copytree(src_item, dest_item)  # Copy directory
                 else:
-                    shutil.copy2(src_item, dest_item)
+                    shutil.copy2(src_item, dest_item)  # Copy files
                     modinfo_path = os.path.join(dest_item, 'modinfo.json')
                     try:
                         with open(modinfo_path, 'r') as file:
@@ -460,7 +460,6 @@ def download_mods(workshop_ids, updated_mods_info):
                         logger.error(f"Error parsing modinfo.json at {modinfo_path}: {e}")
                     except IOError as e:
                         logger.error(f"I/O error when handling modinfo.json at {modinfo_path}: {e}")
-                  # Copy files
             except Exception as e:
                 logger.error(f"Failed to copy {src_item} to {dest_item}. Reason: {e}")
 
