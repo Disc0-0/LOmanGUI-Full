@@ -1,0 +1,560 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - Last Oasis Manager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 mb-4">
+                <i class="fas fa-clipboard-list me-2"></i> Server Logs
+                <small class="text-muted fs-6">Last updated: <span id="last-update-time">{{ current_time }}</span></small>
+                <button id="refresh-btn" class="btn btn-sm btn-primary ms-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </h1>
+        </div>
+    </div>
+
+    <!-- Log Controls -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter me-2"></i> Log Controls
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="server-select" class="form-label">Server</label>
+                            <select class="form-select" id="server-select">
+                                <option value="all">All Servers</option>
+                                {% for server in servers %}
+                                <option value="{{ server.server_id }}">{{ server.tile_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="log-level" class="form-label">Log Level</label>
+                            <select class="form-select" id="log-level">
+                                <option value="all">All Levels</option>
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="error">Error</option>
+                                <option value="debug">Debug</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="log-lines" class="form-label">Lines to Show</label>
+                            <select class="form-select" id="log-lines">
+                                <option value="100">100 lines</option>
+                                <option value="500">500 lines</option>
+                                <option value="1000">1000 lines</option>
+                                <option value="all">All available</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date-from" class="form-label">From Date</label>
+                            <input type="datetime-local" class="form-control" id="date-from">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date-to" class="form-label">To Date</label>
+                            <input type="datetime-local" class="form-control" id="date-to">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="log-search" class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="log-search" placeholder="Search logs...">
+                                <button class="btn btn-primary" type="button" id="search-btn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <div class="d-flex justify-content-between">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="auto-refresh" checked>
+                                    <label class="form-check-label" for="auto-refresh">Auto-refresh (15s)</label>
+                                </div>
+                                <div class="btn-group">
+                                    <button id="clear-filters-btn" class="btn btn-secondary">
+                                        <i class="fas fa-eraser me-2"></i> Clear Filters
+                                    </button>
+                                    <button id="download-logs-btn" class="btn btn-success">
+                                        <i class="fas fa-download me-2"></i> Download Logs
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Content -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-terminal me-2"></i> Log Output
+                    </h5>
+                    <div>
+                        <small class="text-white me-2" id="log-count">0 entries</small>
+                        <div class="btn-group btn-group-sm">
+                            <button id="pause-streaming-btn" class="btn btn-light" title="Pause real-time updates">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <button id="word-wrap-btn" class="btn btn-light" title="Toggle word wrap">
+                                <i class="fas fa-paragraph"></i>
+                            </button>
+                            <button id="expand-btn" class="btn btn-light" title="Expand view">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="log-container" class="log-console">
+                        <div id="log-content">
+                            <!-- Log entries will be inserted here -->
+                            <div class="log-line log-info">
+                                <span class="log-timestamp">2025-04-18 17:10:05</span>
+                                <span class="log-level">INFO</span>
+                                <span class="log-server">LO_Server0</span>
+                                <span class="log-message">Server started successfully</span>
+                            </div>
+                            <div class="log-line log-warning">
+                                <span class="log-timestamp">2025-04-18 17:11:23</span>
+                                <span class="log-level">WARNING</span>
+                                <span class="log-server">LO_Server1</span>
+                                <span class="log-message">Player connection timeout: SteamID(12345678901234567)</span>
+                            </div>
+                            <div class="log-line log-error">
+                                <span class="log-timestamp">2025-04-18 17:12:45</span>
+                                <span class="log-level">ERROR</span>
+                                <span class="log-server">LO_Server0</span>
+                                <span class="log-message">Failed to load mod: 2673391719</span>
+                            </div>
+                            <div class="log-line log-info">
+                                <span class="log-timestamp">2025-04-18 17:13:10</span>
+                                <span class="log-level">INFO</span>
+                                <span class="log-server">LO_Server0</span>
+                                <span class="log-message">Player joined: Nomad123 [SteamID(76561198012345678)]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <span class="legend-item"><span class="badge bg-info">INFO</span></span>
+                            <span class="legend-item"><span class="badge bg-warning">WARNING</span></span>
+                            <span class="legend-item"><span class="badge bg-danger">ERROR</span></span>
+                            <span class="legend-item"><span class="badge bg-secondary">DEBUG</span></span>
+                        </div>
+                        <div>
+                            <button id="load-more-btn" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i> Load More
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Detail Modal -->
+<div class="modal fade" id="log-detail-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Entry Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <strong>Timestamp:</strong> <span id="detail-timestamp"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Level:</strong> <span id="detail-level" class="badge bg-info"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Server:</strong> <span id="detail-server"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Message:</strong>
+                    <div id="detail-message" class="p-3 bg-light rounded mt-2"></div>
+                </div>
+                <div class="mb-3" id="detail-stacktrace-container">
+                    <strong>Stack Trace:</strong>
+                    <pre id="detail-stacktrace" class="p-3 bg-light rounded mt-2"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="copy-detail-btn">
+                    <i class="fas fa-copy me-2"></i> Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initial variables
+        let logAutoRefresh = true;
+        let logStreamPaused = false;
+        let wordWrapEnabled = true;
+        let expandedView = false;
+        let logStreamTimer = null;
+        const refreshInterval = 15000; // 15 seconds
+        let currentLogFilters = {
+            server: 'all',
+            level: 'all',
+            lines: 100,
+            dateFrom: null,
+            dateTo: null,
+            search: ''
+        };
+        
+        // Initialize date pickers with current day
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        $('#date-from').val(`${today}T00:00`);
+        $('#date-to').val(`${today}T23:59`);
+        
+        // Initialize filter events
+        $('#server-select, #log-level, #log-lines').change(function() {
+            updateFilters();
+            fetchLogs();
+        });
+        
+        $('#date-from, #date-to').change(function() {
+            updateFilters();
+        });
+        
+        $('#search-btn').click(function() {
+            updateFilters();
+            fetchLogs();
+        });
+        
+        $('#log-search').keypress(function(e) {
+            if (e.which === 13) {
+                updateFilters();
+                fetchLogs();
+            }
+        });
+        
+        // Refresh button click handler
+        $('#refresh-btn').click(function() {
+            fetchLogs();
+        });
+        
+        // Auto-refresh toggle
+        $('#auto-refresh').change(function() {
+            logAutoRefresh = $(this).prop('checked');
+            if (logAutoRefresh) {
+                startLogStream();
+            } else {
+                stopLogStream();
+            }
+        // Pause streaming button
+        $('#pause-streaming-btn').click(function() {
+            logStreamPaused = !logStreamPaused;
+            if (logStreamPaused) {
+                $(this).html('<i class="fas fa-play"></i>');
+                $(this).attr('title', 'Resume real-time updates');
+            } else {
+                $(this).html('<i class="fas fa-pause"></i>');
+                $(this).attr('title', 'Pause real-time updates');
+                fetchLogs(); // Refresh once when resuming
+            }
+        });
+        
+        // Word wrap toggle
+        $('#word-wrap-btn').click(function() {
+            wordWrapEnabled = !wordWrapEnabled;
+            if (wordWrapEnabled) {
+                $('#log-container').addClass('wrap-text');
+                $(this).addClass('active');
+            } else {
+                $('#log-container').removeClass('wrap-text');
+                $(this).removeClass('active');
+            }
+        });
+        
+        // Expand view toggle
+        $('#expand-btn').click(function() {
+            expandedView = !expandedView;
+            if (expandedView) {
+                $('#log-container').addClass('expanded');
+                $(this).html('<i class="fas fa-compress"></i>');
+                $(this).attr('title', 'Compress view');
+            } else {
+                $('#log-container').removeClass('expanded');
+                $(this).html('<i class="fas fa-expand"></i>');
+                $(this).attr('title', 'Expand view');
+            }
+        });
+        
+        // Clear filters button
+        $('#clear-filters-btn').click(function() {
+            // Reset all filters to defaults
+            $('#server-select').val('all');
+            $('#log-level').val('all');
+            $('#log-lines').val('100');
+            $('#log-search').val('');
+            
+            // Reset date pickers
+            $('#date-from').val(`${today}T00:00`);
+            $('#date-to').val(`${today}T23:59`);
+            
+            // Update filters and fetch logs
+            updateFilters();
+            fetchLogs();
+        });
+        
+        // Download logs button
+        $('#download-logs-btn').click(function() {
+            downloadLogs();
+        });
+        
+        // Load more button
+        $('#load-more-btn').click(function() {
+            loadMoreLogs();
+        });
+        
+        // Log line click handler - show details modal
+        $(document).on('click', '.log-line', function() {
+            showLogDetails($(this));
+        });
+        
+        // Copy to clipboard button in details modal
+        $('#copy-detail-btn').click(function() {
+            const text = $('#detail-message').text() + '\n\n' + $('#detail-stacktrace').text();
+            navigator.clipboard.writeText(text).then(function() {
+                // Show success message
+                const btn = $('#copy-detail-btn');
+                const originalText = btn.html();
+                btn.html('<i class="fas fa-check me-2"></i> Copied!');
+                setTimeout(function() {
+                    btn.html(originalText);
+                }, 2000);
+            });
+        });
+        
+        // Function to update filters from form inputs
+        function updateFilters() {
+            currentLogFilters = {
+                server: $('#server-select').val(),
+                level: $('#log-level').val(),
+                lines: parseInt($('#log-lines').val()) || 100,
+                dateFrom: $('#date-from').val(),
+                dateTo: $('#date-to').val(),
+                search: $('#log-search').val().trim()
+            };
+        }
+        
+        // Function to fetch logs based on current filters
+        function fetchLogs() {
+            // Update UI to show loading
+            $('#last-update-time').text('Loading...');
+            
+            // API call to fetch logs
+            fetch('/api/logs?' + new URLSearchParams({
+                server: currentLogFilters.server,
+                level: currentLogFilters.level,
+                lines: currentLogFilters.lines,
+                from: currentLogFilters.dateFrom,
+                to: currentLogFilters.dateTo,
+                search: currentLogFilters.search
+            }))
+            .then(response => response.json())
+            .then(data => {
+                updateLogDisplay(data.logs);
+                updateLogStats(data.stats);
+                $('#last-update-time').text(new Date().toLocaleTimeString());
+                $('#log-count').text(`${data.logs.length} entries`);
+            })
+            .catch(error => {
+                console.error('Error fetching logs:', error);
+                $('#log-content').html('<div class="text-danger p-3">Failed to load logs. Check the console for details.</div>');
+                $('#last-update-time').text(new Date().toLocaleTimeString() + ' (Error)');
+            });
+        }
+        
+        // Function to update the log display with new data
+        function updateLogDisplay(logs) {
+            if (!logs || logs.length === 0) {
+                $('#log-content').html('<div class="text-center p-3">No logs found matching your criteria</div>');
+                return;
+            }
+            
+            let html = '';
+            logs.forEach(log => {
+                const levelClass = `log-${log.level.toLowerCase()}`;
+                html += `
+                    <div class="log-line ${levelClass}" data-timestamp="${log.timestamp}" data-level="${log.level}" data-server="${log.server}" data-message="${encodeURIComponent(log.message)}" data-stacktrace="${encodeURIComponent(log.stacktrace || '')}">
+                        <span class="log-timestamp">${log.timestamp}</span>
+                        <span class="log-level">${log.level}</span>
+                        <span class="log-server">${log.server}</span>
+                        <span class="log-message">${log.message}</span>
+                    </div>
+                `;
+            });
+            
+            $('#log-content').html(html);
+        }
+        
+        // Function to update log statistics
+        function updateLogStats(stats) {
+            if (!stats) return;
+            
+            // Update error stats
+            $('#total-errors').text(stats.errorCount || 0);
+            $('#unique-errors').text(stats.uniqueErrorCount || 0);
+            $('#last-error-time').text(stats.lastErrorTime || 'N/A');
+            
+            // Update performance metrics
+            const restartCount = stats.restartCount || 0;
+            const maxRestarts = 10; // Arbitrary max for progress bar
+            const restartPercent = Math.min(100, (restartCount / maxRestarts) * 100);
+            $('#restart-progress').css('width', `${restartPercent}%`).text(restartCount);
+            
+            // Update mod update count
+            const modUpdateCount = stats.modUpdateCount || 0;
+            const maxUpdates = 20; // Arbitrary max for progress bar
+            const updatePercent = Math.min(100, (modUpdateCount / maxUpdates) * 100);
+            $('#mod-update-progress').css('width', `${updatePercent}%`).text(modUpdateCount);
+            
+            // Update error rate
+            const errorRate = stats.errorRate || 0;
+            $('#error-rate-progress').css('width', `${errorRate}%`).text(`${errorRate.toFixed(1)}%`);
+            
+            // Update uptime
+            $('#server-uptime').text(stats.uptime || 'N/A');
+        }
+        
+        // Function to show log details in modal
+        function showLogDetails(logElement) {
+            const timestamp = logElement.data('timestamp');
+            const level = logElement.data('level');
+            const server = logElement.data('server');
+            const message = decodeURIComponent(logElement.data('message'));
+            const stacktrace = decodeURIComponent(logElement.data('stacktrace'));
+            
+            // Update modal content
+            $('#detail-timestamp').text(timestamp);
+            $('#detail-level').text(level);
+            $('#detail-server').text(server);
+            $('#detail-message').text(message);
+            
+            // Update level badge class
+            $('#detail-level').removeClass('bg-info bg-warning bg-danger bg-secondary');
+            switch (level.toLowerCase()) {
+                case 'info':
+                    $('#detail-level').addClass('bg-info');
+                    break;
+                case 'warning':
+                    $('#detail-level').addClass('bg-warning');
+                    break;
+                case 'error':
+                    $('#detail-level').addClass('bg-danger');
+                    break;
+                case 'debug':
+                    $('#detail-level').addClass('bg-secondary');
+                    break;
+            }
+            
+            // Show/hide stacktrace section
+            if (stacktrace) {
+                $('#detail-stacktrace').text(stacktrace);
+                $('#detail-stacktrace-container').show();
+            } else {
+                $('#detail-stacktrace-container').hide();
+            }
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('log-detail-modal'));
+            modal.show();
+        }
+        
+        // Function to download logs
+        function downloadLogs() {
+            // Get current filters
+            updateFilters();
+            
+            // Create a blob with the logs
+            const logs = Array.from(document.querySelectorAll('.log-line')).map(line => {
+                const timestamp = line.querySelector('.log-timestamp').textContent;
+                const level = line.querySelector('.log-level').textContent;
+                const server = line.querySelector('.log-server').textContent;
+                const message = line.querySelector('.log-message').textContent;
+                return `[${timestamp}] [${level}] [${server}] ${message}`;
+            }).join('\n');
+            
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create a download link and click it
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `server-logs-${new Date().toISOString().replace(/:/g, '-')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        // Function to load more logs
+        function loadMoreLogs() {
+            // Update lines to load more
+            const currentLines = parseInt($('#log-lines').val());
+            const newLines = currentLines + 500; // Load 500 more lines
+            
+            // Update the lines filter
+            $('#log-lines').val(newLines);
+            updateFilters();
+            
+            // Fetch more logs
+            fetchLogs();
+        }
+        
+        // Function to start the auto-refresh log stream
+        function startLogStream() {
+            // Clear any existing timer
+            stopLogStream();
+            
+            // Start a new timer
+            logStreamTimer = setInterval(function() {
+                if (!logStreamPaused) {
+                    fetchLogs();
+                }
+            }, refreshInterval);
+        }
+        
+        // Function to stop the auto-refresh log stream
+        function stopLogStream() {
+            if (logStreamTimer) {
+                clearInterval(logStreamTimer);
+                logStreamTimer = null;
+            }
+        }
+        
+        // Initialize log streaming if auto-refresh is enabled
+        if (logAutoRefresh) {
+            startLogStream();
+        }
+        
+        // Initial log fetch on page load
+        fetchLogs();
+    });
+</script>
+{% endblock %}

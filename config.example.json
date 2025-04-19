@@ -1,0 +1,32 @@
+{
+    // Comma-separated list of mod IDs
+    "mods": "MOD_ID_1,MOD_ID_2,MOD_ID_3",
+    // Path to Last Oasis binaries
+    "folder_path": "C:\\path\\to\\lastoasis\\Mist\\Binaries\\Win64\\",
+    // API authentication keys
+    "customer_key": "YOUR_CUSTOMER_KEY_HERE",
+    "provider_key": "YOUR_PROVIDER_KEY_HERE",
+    // Discord webhook for server status notifications
+    "server_status_webhook": "YOUR_DISCORD_WEBHOOK_URL_HERE",
+    // Path to Steam CMD installation
+    "steam_cmd_path": "C:\\path\\to\\steamcmd\\",
+    // Number of tiles to run
+    "tile_num": 3,
+    // Starting port for server
+    "start_port": 6668,
+    // Starting query port for server
+    "start_query_port": 29668,
+    // Server identifier
+    "identifier": "YOUR_SERVER_IDENTIFIER",
+    // Public IP address or domain for players to connect to
+    "connection_ip": "your.domain.or.ip.address",
+    // Number of player slots per tile
+    "slots": 15,
+    // Backend server address
+    "backend": "backend.last-oasis.com",
+    // Server restart time in minutes
+    "restart_time": 300,
+    // Mod check interval in seconds
+    "mod_check_interval": 300
+}
+

@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Last Oasis Manager{% endblock %}
+
+{% block head %}
+<meta http-equiv="refresh" content="60">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 mb-4">
+                <i class="fas fa-gauge-high me-2"></i> Dashboard
+                <small class="text-muted fs-6">Last updated: <span id="last-update-time">{{ current_time }}</span></small>
+                <button id="refresh-btn" class="btn btn-sm btn-primary ms-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </h1>
+        </div>
+    </div>
+
+    <!-- Server Status Overview -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-server me-2"></i> Server Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="server-status-container">
+                        {% for server in servers %}
+                        <div class="server-card mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="status-indicator {% if server.status == 'online' %}bg-success{% else %}bg-danger{% endif %} me-3"></div>
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-0">{{ server.tile_name or server.server_id }}</h5>
+                                    <small class="text-muted">{{ server.server_id }}</small>
+                                </div>
+                                <div class="server-actions">
+                                    {% if server.status == 'online' %}
+                                    <button class="btn btn-sm btn-warning me-1 server-action" data-server-id="{{ server.server_id }}" data-action="restart">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger server-action" data-server-id="{{ server.server_id }}" data-action="stop">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success server-action" data-server-id="{{ server.server_id }}" data-action="start">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mod Status Overview -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-puzzle-piece me-2"></i> Mod Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="mod-status-container">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Mod</th>
+                                        <th>Version</th>
+                                        <th>Last Updated</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mods-table-body">
+                                    {% for mod in mods %}
+                                    <tr>
+                                        <td>{{ mod.name }}</td>
+                                        <td>{{ mod.version }}</td>
+                                        <td>{{ mod.last_update }}</td>
+                                        <td>
+                                            <span class="badge bg-success">{{ mod.status }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Message Panel -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bullhorn me-2"></i> Admin Message
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="admin-message-form">
+                        <div class="mb-3">
+                            <textarea class="form-control" id="admin-message" rows="2" placeholder="Enter message to broadcast to all servers..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i> Send
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i> System Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Server Updates:</span>
+                        <span id="server-update-status" class="badge bg-success">Up to date</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Mod Updates:</span>
+                        <span id="mod-update-status" class="badge bg-success">Up to date</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>API Status:</span>
+                        <span id="api-status" class="badge bg-success">Online</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Last Check:</span>
+                        <span id="last-check-time">{{ current_time }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button id="start-all-servers-btn" class="btn btn-success">
+                            <i class="fas fa-play me-2"></i> Start All Servers
+                        </button>
+                        <button id="stop-all-servers-btn" class="btn btn-danger">
+                            <i class="fas fa-stop me-2"></i> Stop All Servers
+                        </button>
+                        <button id="check-updates-btn" class="btn btn-info text-white">
+                            <i class="fas fa-sync-alt me-2"></i> Check for Updates
+                        </button>
+                        <button id="update-mods-btn" class="btn btn-warning">
+                            <i class="fas fa-download me-2"></i> Update Mods
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Refresh dashboard data
+        function refreshDashboard() {
+            fetch('/api/dashboard')
+                .then(response => response.json())
+                .then(data => {
+                    // Update server status
+                    updateServerStatus(data.servers);
+                    
+                    // Update mod status
+                    updateModStatus(data.mods);
+                    
+                    // Update system status
+                    updateSystemStatus(data.system);
+                    
+                    // Update last refresh time
+                    $('#last-update-time').text(new Date().toLocaleTimeString());
+                })
+                .catch(error => {
+                    console.error('Error fetching dashboard data:', error);
+                    $('#api-status').removeClass('bg-success').addClass('bg-danger').text('Offline');
+                });
+        }
+        
+        // Refresh button click handler
+        $('#refresh-btn').click(function() {
+            refreshDashboard();
+        });
+        
+        // Server action buttons
+        $('.server-action').click(function() {
+            const serverId = $(this).data('server-id');
+            const action = $(this).data('action');
+            
+            fetch('/api/servers/action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    server_id: serverId,
+                    action: action
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // Show success message
+                alert(`${action.charAt(0).toUpperCase() + action.slice(1)} command sent to ${serverId}`);
+                // Refresh after short delay
+                setTimeout(refreshDashboard, 2000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send command. Check console for details.');
+            });
+        });
+        
+        // Admin message form
+        $('#admin-message-form').submit(function(e) {
+            e.preventDefault();
+            
+            const message = $('#admin-message').val().trim();
+            if (!message) return;
+            
+            fetch('/api/admin/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    server_ids: [] // Empty array means all servers
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                $('#admin-message').val('');
+                alert('Message sent to all servers');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send message. Check console for details.');
+            });
+        });
+        
+        // Quick action buttons
+        $('#start-all-servers-btn').click(function() {
+            if (confirm('Are you sure you want to start all servers?')) {
+                fetch('/api/servers/start', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('Starting all servers');
+                        setTimeout(refreshDashboard, 5000);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to start servers');
+                    });
+            }
+        });
+        
+        $('#stop-all-servers-btn').click(function() {
+            if (confirm('Are you sure you want to stop all servers?')) {
+                fetch('/api/servers/stop', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('Stopping all servers');
+                        setTimeout(refreshDashboard, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to stop servers');
+                    });
+            }
+        });
+        
+        $('#check-updates-btn').click(function() {
+            fetch('/api/mods/check')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.updates_available) {
+                        alert('Updates available for some mods!');
+                    } else {
+                        alert('All mods are up to date');
+                    }
+                    refreshDashboard();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to check for updates');
+                });
+        });
+        
+        $('#update-mods-btn').click(function() {
+            if (confirm('Are you sure you want to update all mods?')) {
+                fetch('/api/mods/update', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        setTimeout(refreshDashboard, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to update mods');
+                    });
+            }
+        });
+        
+        // Helper functions to update dashboard components
+        function updateServerStatus(servers) {
+            const container = $('#server-status-container');
+            container.empty();
+            
+            if (servers && servers.length > 0) {
+                servers.forEach(server => {
+                    const statusClass = server.status === 'online' ? 'bg-success' : 'bg-danger';
+                    const actionButtons = server.status === 'online' 
+                        ? `<button class="btn btn-sm btn-warning me-1 server-action" data-server-id="${server.server_id}" data-action="restart">
+                            <i class="fas fa-sync-alt"></i>
+                           </button>
+                           <button class="btn btn-sm btn-danger server-action" data-server-id="${server.server_id}" data-action="stop">
+                            <i class="fas fa-stop"></i>
+                           </button>`
+                        : `<button class="btn btn-sm btn-success server-action" data-server-id="${server.server_id}" data-action="start">
+                            <i class="fas fa-play"></i>
+                           </button>`;
+                    
+                    container.append(`
+                        <div class="server-card mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="status-indicator ${statusClass} me-3"></div>
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-0">${server.tile_name || server.server_id}</h5>
+                                    <small class="text-muted">${server.server_id}</small>
+                                </div>
+                                <div class="server-actions">
+                                    ${actionButtons}
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            } else {
+                container.html('<div class="alert alert-info">No servers found</div>');
+            }
+            
+            // Rebind event handlers for new buttons
+            $('.server-action').click(function() {
+                const serverId = $(this).data('server-id');
+                const action = $(this).data('action');
+                
+                fetch('/api/servers/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server_id: serverId, action: action }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(`${action.charAt(0).toUpperCase() + action.slice(1)} command sent to ${serverId}`);
+                    setTimeout(refreshDashboard, 2000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to send command');
+                });
+            });
+        }
+        
+        function updateModStatus(mods) {
+            const tbody = $('#mods-table-body');
+            tbody.empty();
+            
+            if (mods && mods.length > 0) {
+                mods.forEach(mod => {
+                    const statusClass = mod.status === 'Up to date' ? 'bg-success' : 'bg-warning';
+                    tbody.append(`
+                        <tr>
+                            <td>${mod.name}</td>
+                            <td>${mod.version}</td>
+                            <td>${mod.last_update}</td>
+                            <td><span class="badge ${statusClass}">${mod.status}</span></td>
+                        </tr>
+                    `);
+                });
+            } else {
+                tbody.html('<tr><td colspan="4" class="text-center">No mods found</td></tr>');
+            }
+        }
+        
+        function updateSystemStatus(system) {
+            // Update server update status
+            const serverUpdateStatus = $('#server-update-status');
+            if (system.server_update_available) {
+                serverUpdateStatus.removeClass('bg-success').addClass('bg-warning').text('Update Available');
+            } else {
+                serverUpdateStatus.removeClass('bg-warning').addClass('bg-success').text('Up to date');
+            }
+            
+            // Update mod update status
+            const modUpdateStatus = $('#mod-update-status');
+            if (system.mod_updates_available) {
+                modUpdateStatus.removeClass('bg-success').addClass('bg-warning').text('Updates Available');
+            } else {
+                modUpdateStatus.removeClass('bg-warning').addClass('bg-success').text('Up to date');
+            }
+            
+            // Update API status
+            $('#api-status').removeClass('bg-danger').addClass('bg-success').text('Online');
+            
+            // Update last check time
+            $('#last-check-time').text(system.last_check_time);
+        }
+        
+        // Initially load dashboard data
+        refreshDashboard();
+        
+        // Set up auto-refresh every 60 seconds
+        setInterval(refreshDashboard, 60000);
+    });
+</script>
+{% endblock %}

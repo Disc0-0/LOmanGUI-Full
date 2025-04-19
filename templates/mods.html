@@ -1,0 +1,607 @@
+{% extends "base.html" %}
+
+{% block title %}Mods - Last Oasis Manager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 mb-4">
+                <i class="fas fa-puzzle-piece me-2"></i> Mod Management
+                <small class="text-muted fs-6">Last updated: <span id="last-update-time">{{ current_time }}</span></small>
+                <button id="refresh-btn" class="btn btn-sm btn-primary ms-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </h1>
+        </div>
+    </div>
+
+    <!-- Quick Actions Panel -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="d-grid gap-2">
+                                <button id="check-updates-btn" class="btn btn-info text-white">
+                                    <i class="fas fa-sync-alt me-2"></i> Check for Updates
+                                </button>
+                                <button id="update-mods-btn" class="btn btn-success">
+                                    <i class="fas fa-download me-2"></i> Update All Mods
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid gap-2">
+                                <button id="add-mod-btn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-mod-modal">
+                                    <i class="fas fa-plus me-2"></i> Add New Mod
+                                </button>
+                                <button id="backup-mods-btn" class="btn btn-warning">
+                                    <i class="fas fa-save me-2"></i> Backup Mods
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Installed Mods List -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i> Installed Mods
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Workshop ID</th>
+                                    <th>Version</th>
+                                    <th>Last Updated</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mods-table-body">
+                                {% for mod in mods %}
+                                <tr class="align-middle">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mod-icon me-2">
+                                                <img src="{{ mod.icon_url or '/static/img/mod-placeholder.png' }}" alt="{{ mod.name }}" class="img-thumbnail" width="40">
+                                            </div>
+                                            {{ mod.name }}
+                                        </div>
+                                    </td>
+                                    <td>{{ mod.workshop_id }}</td>
+                                    <td>{{ mod.version }}</td>
+                                    <td>{{ mod.last_update }}</td>
+                                    <td>
+                                        <span class="badge {{ 'bg-success' if mod.status == 'Up to date' else 'bg-warning' }}">
+                                            {{ mod.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-info text-white mod-action" data-mod-id="{{ mod.workshop_id }}" data-action="info">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning mod-action" data-mod-id="{{ mod.workshop_id }}" data-action="update" {{ 'disabled' if mod.status == 'Up to date' else '' }}>
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger mod-action" data-mod-id="{{ mod.workshop_id }}" data-action="remove">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Mod -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i> Add New Mod
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="add-mod-form">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="mod-workshop-id" class="form-label">Workshop ID</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="mod-workshop-id" name="workshop_id" placeholder="e.g., 1234567890" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="parse-workshop-url-btn">Parse URL</button>
+                                </div>
+                                <div class="form-text">Enter the Steam Workshop ID for the mod</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="mod-workshop-url" class="form-label">Workshop URL</label>
+                                <input type="url" class="form-control" id="mod-workshop-url" name="workshop_url" placeholder="e.g., https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890">
+                                <div class="form-text">Or paste the Steam Workshop URL here</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-download me-2"></i> Add Mod
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mod Info Modal -->
+<div class="modal fade" id="mod-info-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mod Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="mod-info-loading" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Loading mod information...</p>
+                </div>
+                <div id="mod-info-content" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Mod ID:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span id="mod-info-id"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Name:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span id="mod-info-name"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Author:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span id="mod-info-author"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Version:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span id="mod-info-version"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Last Updated:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span id="mod-info-updated"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Status:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span id="mod-info-status" class="badge bg-success"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>File Size:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span id="mod-info-size"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Description:</strong>
+                            <p id="mod-info-description" class="mt-2"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a id="mod-info-workshop-link" href="#" target="_blank" class="btn btn-primary">
+                    <i class="fab fa-steam me-2"></i> View on Workshop
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Mod Modal -->
+<div class="modal fade" id="add-mod-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Mod</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-mod-modal-form">
+                    <div class="mb-3">
+                        <label for="modal-mod-workshop-id" class="form-label">Workshop ID</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="modal-mod-workshop-id" name="workshop_id" placeholder="e.g., 1234567890" required>
+                            <button class="btn btn-outline-secondary" type="button" id="modal-parse-workshop-url-btn">Parse</button>
+                        </div>
+                        <div class="form-text">Enter the Steam Workshop ID for the mod</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-mod-workshop-url" class="form-label">Workshop URL</label>
+                        <input type="url" class="form-control" id="modal-mod-workshop-url" name="workshop_url" placeholder="e.g., https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890">
+                        <div class="form-text">Or paste the Steam Workshop URL here</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="modal-add-mod-btn">Add Mod</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Refresh button click handler
+        $('#refresh-btn').click(function() {
+            refreshModData();
+        });
+        
+        // Check for updates button
+        $('#check-updates-btn').click(function() {
+            $(this).prop('disabled', true);
+            $(this).html('<i class="fas fa-spinner fa-spin me-2"></i> Checking...');
+            
+            // Call the API to check for updates
+            fetch('/api/mods/check')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.updates_available) {
+                        alert('Updates available for some mods!');
+                    } else {
+                        alert('All mods are up to date');
+                    }
+                    refreshModData();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to check for updates');
+                })
+                .finally(() => {
+                    $(this).prop('disabled', false);
+                    $(this).html('<i class="fas fa-sync-alt me-2"></i> Check for Updates');
+                });
+        });
+        
+        // Update all mods button
+        $('#update-mods-btn').click(function() {
+            if (!confirm('Are you sure you want to update all mods?')) {
+                return;
+            }
+            
+            $(this).prop('disabled', true);
+            $(this).html('<i class="fas fa-spinner fa-spin me-2"></i> Updating...');
+            
+            // Call the API to update mods
+            fetch('/api/mods/update', {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    refreshModData();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update mods');
+                })
+                .finally(() => {
+                    $(this).prop('disabled', false);
+                    $(this).html('<i class="fas fa-download me-2"></i> Update All Mods');
+                });
+        });
+        
+        // Add mod form submission
+        $('#add-mod-form').submit(function(e) {
+            e.preventDefault();
+            
+            const workshopId = $('#mod-workshop-id').val().trim();
+            if (!workshopId) {
+                alert('Please enter a Workshop ID');
+                return;
+            }
+            
+            // Call the API to add the mod
+            fetch('/api/mods/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    workshop_id: workshopId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Mod added successfully');
+                    $('#mod-workshop-id').val('');
+                    $('#mod-workshop-url').val('');
+                    refreshModData();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to add mod');
+                });
+        });
+        
+        // Parse URL button
+        $('#parse-workshop-url-btn').click(function() {
+            parseWorkshopUrl('#mod-workshop-url', '#mod-workshop-id');
+        });
+        
+        // Modal parse URL button
+        $('#modal-parse-workshop-url-btn').click(function() {
+            parseWorkshopUrl('#modal-mod-workshop-url', '#modal-mod-workshop-id');
+        });
+        
+        // Modal add mod button
+        $('#modal-add-mod-btn').click(function() {
+            const workshopId = $('#modal-mod-workshop-id').val().trim();
+            if (!workshopId) {
+                alert('Please enter a Workshop ID');
+                return;
+            }
+            
+            // Call the API to add the mod
+            fetch('/api/mods/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    workshop_id: workshopId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Mod added successfully');
+                    $('#modal-mod-workshop-id').val('');
+                    $('#modal-mod-workshop-url').val('');
+                    refreshModData();
+                    
+                    // Hide the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('add-mod-modal'));
+                    modal.hide();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to add mod');
+                });
+        });
+        
+        // Mod action buttons
+        $(document).on('click', '.mod-action', function() {
+            const modId = $(this).data('mod-id');
+            const action = $(this).data('action');
+            
+            switch (action) {
+                case 'info':
+                    showModInfo(modId);
+                    break;
+                case 'update':
+                    updateMod(modId);
+                    break;
+                case 'remove':
+                    removeMod(modId);
+                    break;
+            }
+        });
+        
+        // Function to show mod info
+        function showModInfo(modId) {
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('mod-info-modal'));
+            modal.show();
+            
+            // Show loading state
+            $('#mod-info-loading').removeClass('d-none');
+            $('#mod-info-content').addClass('d-none');
+            
+            // Call the API to get mod details
+            fetch(`/api/mods/${modId}`)
+                .then(response => response.json())
+                .then(mod => {
+                    // Fill in the mod details
+                    $('#mod-info-id').text(mod.workshop_id);
+                    $('#mod-info-name').text(mod.name);
+                    $('#mod-info-author').text(mod.author || 'Unknown');
+                    $('#mod-info-version').text(mod.version);
+                    $('#mod-info-updated').text(mod.last_update);
+                    $('#mod-info-status').text(mod.status);
+                    $('#mod-info-size').text(mod.size || 'Unknown');
+                    $('#mod-info-description').text(mod.description || 'No description available');
+                    
+                    // Update status badge color
+                    if (mod.status === 'Up to date') {
+                        $('#mod-info-status').removeClass('bg-warning').addClass('bg-success');
+                    } else {
+                        $('#mod-info-status').removeClass('bg-success').addClass('bg-warning');
+                    }
+                    
+                    // Set the Workshop link
+                    $('#mod-info-workshop-link').attr('href', `https://steamcommunity.com/sharedfiles/filedetails/?id=${mod.workshop_id}`);
+                    
+                    // Show the content
+                    $('#mod-info-loading').addClass('d-none');
+                    $('#mod-info-content').removeClass('d-none');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load mod information');
+                });
+        }
+        
+        // Function to update a specific mod
+        function updateMod(modId) {
+            if (!confirm(`Are you sure you want to update mod ${modId}?`)) {
+                return;
+            }
+            
+            // Call the API to update the mod
+            fetch(`/api/mods/${modId}/update`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Mod updated successfully');
+                    refreshModData();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update mod');
+                });
+        }
+        
+        // Function to remove a mod
+        function removeMod(modId) {
+            if (!confirm(`Are you sure you want to remove mod ${modId}?`)) {
+                return;
+            }
+            
+            // Call the API to remove the mod
+            fetch(`/api/mods/${modId}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Mod removed successfully');
+                    refreshModData();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to remove mod');
+                });
+        }
+        
+        // Function to refresh mod data
+        function refreshModData() {
+            fetch('/api/mods')
+                .then(response => response.json())
+                .then(mods => {
+                    updateModTable(mods);
+                    $('#last-update-time').text(new Date().toLocaleTimeString());
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        
+        // Function to update the mod table
+        function updateModTable(mods) {
+            const tbody = $('#mods-table-body');
+            tbody.empty();
+            
+            mods.forEach(mod => {
+                const row = `
+                    <tr class="align-middle">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="mod-icon me-2">
+                                    <img src="${mod.icon_url || '/static/img/mod-placeholder.png'}" alt="${mod.name}" class="img-thumbnail" width="40">
+                                </div>
+                                ${mod.name}
+                            </div>
+                        </td>
+                        <td>${mod.workshop_id}</td>
+                        <td>${mod.version}</td>
+                        <td>${mod.last_update}</td>
+                        <td>
+                            <span class="badge ${mod.status === 'Up to date' ? 'bg-success' : 'bg-warning'}">
+                                ${mod.status}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-info text-white mod-action" data-mod-id="${mod.workshop_id}" data-action="info">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning mod-action" data-mod-id="${mod.workshop_id}" data-action="update" ${mod.status === 'Up to date' ? 'disabled' : ''}>
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger mod-action" data-mod-id="${mod.workshop_id}" data-action="remove">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+            
+            if (mods.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center">No mods installed</td></tr>');
+            }
+        }
+        
+        // Initial refresh
+        refreshModData();
+        
+        // Function to parse workshop URL and extract the ID
+        function parseWorkshopUrl(urlFieldId, idFieldId) {
+            const url = $(urlFieldId).val().trim();
+            if (!url) {
+                alert('Please enter a Workshop URL');
+                return;
+            }
+            
+            // Extract the Workshop ID from the URL
+            const match = url.match(/id=(\d+)/);
+            if (match && match[1]) {
+                $(idFieldId).val(match[1]);
+            } else {
+                alert('Could not extract Workshop ID from URL');
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,818 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - Last Oasis Manager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 mb-4">
+                <i class="fas fa-gears me-2"></i> Configuration
+                <small class="text-muted fs-6">Last updated: <span id="last-update-time">{{ current_time }}</span></small>
+                <button id="refresh-btn" class="btn btn-sm btn-primary ms-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </h1>
+        </div>
+    </div>
+
+    <!-- Configuration Form -->
+    <form id="config-form">
+        <div class="row mb-4">
+            <div class="col-12 mb-3">
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Save Configuration
+                    </button>
+                    <div>
+                        <button type="button" id="backup-config-btn" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-download me-2"></i> Backup Config
+                        </button>
+                        <button type="button" id="restore-config-btn" class="btn btn-outline-secondary">
+                            <i class="fas fa-upload me-2"></i> Restore Config
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <!-- Nav tabs for configuration sections -->
+                <ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="server-tab" data-bs-toggle="tab" data-bs-target="#server" type="button" role="tab" aria-controls="server" aria-selected="true">
+                            <i class="fas fa-server me-2"></i> Server
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="discord-tab" data-bs-toggle="tab" data-bs-target="#discord" type="button" role="tab" aria-controls="discord" aria-selected="false">
+                            <i class="fab fa-discord me-2"></i> Discord
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mods-tab" data-bs-toggle="tab" data-bs-target="#mods" type="button" role="tab" aria-controls="mods" aria-selected="false">
+                            <i class="fas fa-puzzle-piece me-2"></i> Mods
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button" role="tab" aria-controls="backup" aria-selected="false">
+                            <i class="fas fa-database me-2"></i> Backup
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab content -->
+                <div class="tab-content">
+                    <!-- Server Configuration -->
+                    <div class="tab-pane fade show active" id="server" role="tabpanel" aria-labelledby="server-tab">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-cogs me-2"></i> Basic Server Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="folder-path" class="form-label">Server Installation Path</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="folder-path" name="folder_path" value="{{ config.folder_path }}" required>
+                                                <button class="btn btn-outline-secondary" type="button" id="browse-folder-btn">Browse</button>
+                                            </div>
+                                            <div class="form-text">Path to the Last Oasis server Binaries\Win64 folder</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="steam-cmd-path" class="form-label">SteamCMD Path</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="steam-cmd-path" name="steam_cmd_path" value="{{ config.steam_cmd_path }}" required>
+                                                <button class="btn btn-outline-secondary" type="button" id="browse-steam-btn">Browse</button>
+                                            </div>
+                                            <div class="form-text">Path to the SteamCMD folder</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="tile-num" class="form-label">Number of Tiles</label>
+                                            <input type="number" class="form-control" id="tile-num" name="tile_num" value="{{ config.tile_num }}" min="1" max="50" required>
+                                            <div class="form-text">Number of server tiles to manage</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="identifier" class="form-label">Server Identifier Prefix</label>
+                                            <input type="text" class="form-control" id="identifier" name="identifier" value="{{ config.identifier }}" required>
+                                            <div class="form-text">Prefix for server identifiers (e.g., "Disc0oasis")</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="slots" class="form-label">Player Slots</label>
+                                            <input type="number" class="form-control" id="slots" name="slots" value="{{ config.slots }}" min="1" max="100" required>
+                                            <div class="form-text">Maximum number of players per server</div>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="enable-cheats" name="enable_cheats" {% if config.enable_cheats %}checked{% endif %}>
+                                            <label class="form-check-label" for="enable-cheats">
+                                                Enable Admin Cheats
+                                            </label>
+                                            <div class="form-text">Allow admin commands in-game</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-network-wired me-2"></i> Connection Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="connection-ip" class="form-label">Connection IP/Hostname</label>
+                                            <input type="text" class="form-control" id="connection-ip" name="connection_ip" value="{{ config.connection_ip }}" required>
+                                            <div class="form-text">Public IP or hostname for clients to connect to</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="backend" class="form-label">Backend API URL</label>
+                                            <input type="text" class="form-control" id="backend" name="backend" value="{{ config.backend }}" required>
+                                            <div class="form-text">Last Oasis backend API URL (e.g., "backend.last-oasis.com")</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="start-port" class="form-label">Starting Port</label>
+                                            <input type="number" class="form-control" id="start-port" name="start_port" value="{{ config.start_port }}" min="1000" max="65535" required>
+                                            <div class="form-text">First port number for server connections</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="start-query-port" class="form-label">Starting Query Port</label>
+                                            <input type="number" class="form-control" id="start-query-port" name="start_query_port" value="{{ config.start_query_port }}" min="1000" max="65535" required>
+                                            <div class="form-text">First port number for server queries</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Performance Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="memory-limit" class="form-label">Memory Limit (MB)</label>
+                                            <input type="number" class="form-control" id="memory-limit" name="memory_limit" value="{{ config.memory_limit|default(8192) }}" min="1024" max="65536">
+                                            <div class="form-text">Maximum memory per server process</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="crash-recovery-attempts" class="form-label">Crash Recovery Attempts</label>
+                                            <input type="number" class="form-control" id="crash-recovery-attempts" name="crash_recovery_attempts" value="{{ config.crash_recovery_attempts|default(3) }}" min="0" max="10">
+                                            <div class="form-text">Number of restart attempts after a crash</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="startup-delay" class="form-label">Startup Delay (seconds)</label>
+                                            <input type="number" class="form-control" id="startup-delay" name="startup_delay" value="{{ config.startup_delay|default(5) }}" min="0" max="300">
+                                            <div class="form-text">Delay between starting multiple servers</div>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="priority-boost" name="priority_boost" {% if config.priority_boost %}checked{% endif %}>
+                                            <label class="form-check-label" for="priority-boost">
+                                                Boost Process Priority
+                                            </label>
+                                            <div class="form-text">Run server processes at higher priority</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Discord Integration -->
+                    <div class="tab-pane fade" id="discord" role="tabpanel" aria-labelledby="discord-tab">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fab fa-discord me-2"></i> Discord Webhooks
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="server-status-webhook" class="form-label">Server Status Webhook</label>
+                                            <input type="url" class="form-control" id="server-status-webhook" name="server_status_webhook" value="{{ config.server_status_webhook }}">
+                                            <div class="form-text">Discord webhook URL for server status messages</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="error-webhook" class="form-label">Error Notification Webhook</label>
+                                            <input type="url" class="form-control" id="error-webhook" name="error_webhook" value="{{ config.error_webhook }}">
+                                            <div class="form-text">Discord webhook URL for error notifications</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="use-embeds" name="use_embeds" {% if config.use_embeds %}checked{% endif %}>
+                                    <label class="form-check-label" for="use-embeds">
+                                        Use Rich Embeds
+                                    </label>
+                                    <div class="form-text">Send formatted Discord embeds instead of plain text</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-bell me-2"></i> Notification Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="notify-startup" name="notify_startup" {% if config.notify_startup|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="notify-startup">
+                                                Server Startup Notifications
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="notify-shutdown" name="notify_shutdown" {% if config.notify_shutdown|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="notify-shutdown">
+                                                Server Shutdown Notifications
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="notify-restart" name="notify_restart" {% if config.notify_restart|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="notify-restart">
+                                                Server Restart Notifications
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="notify-mod-updates" name="notify_mod_updates" {% if config.notify_mod_updates|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="notify-mod-updates">
+                                                Mod Update Notifications
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="notify-server-updates" name="notify_server_updates" {% if config.notify_server_updates|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="notify-server-updates">
+                                                Server Update Notifications
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="notify-errors" name="notify_errors" {% if config.notify_errors|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="notify-errors">
+                                                Error Notifications
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-comment-alt me-2"></i> Message Customization
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="startup-message" class="form-label">Server Startup Message</label>
+                                            <input type="text" class="form-control" id="startup-message" name="startup_message" value="{{ config.startup_message|default('{server_name} is starting up...') }}">
+                                            <div class="form-text">Use {server_name} as a placeholder for the tile name</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="shutdown-message" class="form-label">Server Shutdown Message</label>
+                                            <input type="text" class="form-control" id="shutdown-message" name="shutdown_message" value="{{ config.shutdown_message|default('{server_name} is shutting down') }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="restart-message" class="form-label">Server Restart Message</label>
+                                            <input type="text" class="form-control" id="restart-message" name="restart_message" value="{{ config.restart_message|default('{server_name} is restarting in {time} seconds') }}">
+                                            <div class="form-text">Use {time} as a placeholder for restart delay</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="update-message" class="form-label">Update Available Message</label>
+                                            <input type="text" class="form-control" id="update-message" name="update_message" value="{{ config.update_message|default('Server update available. Restarting in {time} seconds.') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mods Configuration -->
+                    <div class="tab-pane fade" id="mods" role="tabpanel" aria-labelledby="mods-tab">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fab fa-steam me-2"></i> Steam Workshop Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="workshop-app-id" class="form-label">Steam Workshop App ID</label>
+                                            <input type="text" class="form-control" id="workshop-app-id" name="workshop_app_id" value="{{ config.workshop_app_id|default('903950') }}">
+                                            <div class="form-text">Steam App ID for Last Oasis (903950)</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="mod-download-path" class="form-label">Mod Download Path</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="mod-download-path" name="mod_download_path" value="{{ config.mod_download_path|default('') }}">
+                                                <button class="btn btn-outline-secondary" type="button" id="browse-mod-path-btn">Browse</button>
+                                            </div>
+                                            <div class="form-text">Leave empty to use default SteamCMD workshop path</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="verify-mod-downloads" name="verify_mod_downloads" {% if config.verify_mod_downloads|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="verify-mod-downloads">
+                                                Verify Mod Downloads
+                                            </label>
+                                            <div class="form-text">Perform integrity check after mod downloads</div>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="backup-mods-before-update" name="backup_mods_before_update" {% if config.backup_mods_before_update|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="backup-mods-before-update">
+                                                Backup Mods Before Update
+                                            </label>
+                                            <div class="form-text">Create a backup of mods before updating</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-sync-alt me-2"></i> Update Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="mod-check-interval" class="form-label">Mod Check Interval (minutes)</label>
+                                            <input type="number" class="form-control" id="mod-check-interval" name="mod_check_interval" value="{{ config.mod_check_interval|default(60) }}" min="5" max="1440">
+                                            <div class="form-text">How often to check for mod updates</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="server-check-interval" class="form-label">Server Check Interval (minutes)</label>
+                                            <input type="number" class="form-control" id="server-check-interval" name="server_check_interval" value="{{ config.server_check_interval|default(60) }}" min="5" max="1440">
+                                            <div class="form-text">How often to check for server updates</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="restart-time" class="form-label">Restart Delay (seconds)</label>
+                                            <input type="number" class="form-control" id="restart-time" name="restart_time" value="{{ config.restart_time|default(300) }}" min="0" max="3600">
+                                            <div class="form-text">Time to wait before restarting servers after updates</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="auto-update-mods" name="auto_update_mods" {% if config.auto_update_mods|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="auto-update-mods">
+                                                Automatically Update Mods
+                                            </label>
+                                            <div class="form-text">Download and install mod updates when available</div>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="auto-update-server" name="auto_update_server" {% if config.auto_update_server|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="auto-update-server">
+                                                Automatically Update Server
+                                            </label>
+                                            <div class="form-text">Download and install server updates when available</div>
+                                        </div>
+                                        
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="restart-on-update" name="restart_on_update" {% if config.restart_on_update|default(true) %}checked{% endif %}>
+                                            <label class="form-check-label" for="restart-on-update">
+                                                Restart Servers After Updates
+                                            </label>
+                                            <div class="form-text">Automatically restart servers after updates</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backup Configuration -->
+                    <div class="tab-pane fade" id="backup" role="tabpanel" aria-labelledby="backup-tab">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-hdd me-2"></i> Backup Storage
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="backup-path" class="form-label">Backup Directory</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="backup-path" name="backup_path" value="{{ config.backup_path|default('backups') }}">
+                                                <button class="btn btn-outline-secondary" type="button" id="browse-backup-btn">Browse</button>
+                                            </div>
+                                            <div class="form-text">Directory to store backups (relative or absolute path)</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="enable-auto-backup" class="form-label">Automatic Backups</label>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enable-auto-backup" name="enable_auto_backup" checked>
+                                                <label class="form-check-label" for="enable-auto-backup">Enable automatic scheduled backups</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="backup-redundancy" class="form-label">Backup Redundancy</label>
+                                            <select class="form-select" id="backup-redundancy" name="backup_redundancy">
+                                                <option value="single">Single Copy</option>
+                                                <option value="duplicate">Duplicate (2 copies)</option>
+                                                <option value="triplicate">Triplicate (3 copies)</option>
+                                            </select>
+                                            <div class="form-text">Number of backup copies to maintain</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Backup Scheduling Options -->
+                                <div class="card mb-4 border-secondary">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-calendar-alt me-2"></i> Backup Scheduling Options
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="backup-frequency" class="form-label">Backup Frequency</label>
+                                                    <select class="form-select" id="backup-frequency" name="backup_frequency">
+                                                        <option value="daily">Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                        <option value="monthly">Monthly</option>
+                                                        <option value="custom">Custom</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="mb-3" id="weekly-options">
+                                                    <label class="form-label">Days of Week</label>
+                                                    <div class="btn-group d-flex" role="group">
+                                                        <input type="checkbox" class="btn-check" id="day-mon" name="backup_days[]" value="mon">
+                                                        <label class="btn btn-outline-primary" for="day-mon">M</label>
+                                                        
+                                                        <input type="checkbox" class="btn-check" id="day-tue" name="backup_days[]" value="tue">
+                                                        <label class="btn btn-outline-primary" for="day-tue">T</label>
+                                                        
+                                                        <input type="checkbox" class="btn-check" id="day-wed" name="backup_days[]" value="wed">
+                                                        <label class="btn btn-outline-primary" for="day-wed">W</label>
+                                                        
+                                                        <input type="checkbox" class="btn-check" id="day-thu" name="backup_days[]" value="thu">
+                                                        <label class="btn btn-outline-primary" for="day-thu">T</label>
+                                                        
+                                                        <input type="checkbox" class="btn-check" id="day-fri" name="backup_days[]" value="fri">
+                                                        <label class="btn btn-outline-primary" for="day-fri">F</label>
+                                                        
+                                                        <input type="checkbox" class="btn-check" id="day-sat" name="backup_days[]" value="sat">
+                                                        <label class="btn btn-outline-primary" for="day-sat">S</label>
+                                                        
+                                                        <input type="checkbox" class="btn-check" id="day-sun" name="backup_days[]" value="sun">
+                                                        <label class="btn btn-outline-primary" for="day-sun">S</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3" id="monthly-options">
+                                                    <label for="backup-day-of-month" class="form-label">Day of Month</label>
+                                                    <select class="form-select" id="backup-day-of-month" name="backup_day_of_month">
+                                                        {% for i in range(1, 32) %}
+                                                        <option value="{{ i }}">{{ i }}</option>
+                                                        {% endfor %}
+                                                        <option value="last">Last day</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="backup-time" class="form-label">Backup Time</label>
+                                                    <input type="time" class="form-control" id="backup-time" name="backup_time" value="02:00">
+                                                    <div class="form-text">Time to run scheduled backups (24-hour format)</div>
+                                                </div>
+                                                
+                                                <div class="mb-3" id="custom-interval">
+                                                    <label for="custom-interval-value" class="form-label">Custom Interval</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="custom-interval-value" name="custom_interval_value" min="1" value="12">
+                                                        <select class="form-select" id="custom-interval-unit" name="custom_interval_unit">
+                                                            <option value="hours">Hours</option>
+                                                            <option value="days">Days</option>
+                                                            <option value="weeks">Weeks</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-text">Run backups at this interval</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Retention Settings -->
+                                <div class="card mb-4 border-secondary">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-history me-2"></i> Retention Settings
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="max-backups" class="form-label">Maximum Number of Backups</label>
+                                                    <input type="number" class="form-control" id="max-backups" name="max_backups" min="1" value="10">
+                                                    <div class="form-text">Maximum number of backups to keep before removing older ones</div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="retention-period" class="form-label">Retention Period</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="retention-value" name="retention_value" min="1" value="30">
+                                                        <select class="form-select" id="retention-unit" name="retention_unit">
+                                                            <option value="days">Days</option>
+                                                            <option value="weeks">Weeks</option>
+                                                            <option value="months">Months</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-text">Remove backups older than this period</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Retention Rules by Backup Type</label>
+                                                    <div class="card border-light">
+                                                        <div class="card-body p-3">
+                                                            <div class="mb-2">
+                                                                <label for="auto-backup-retention" class="form-label form-label-sm">Automatic Backups</label>
+                                                                <input type="number" class="form-control form-control-sm" id="auto-backup-retention" name="auto_backup_retention" min="1" value="10">
+                                                            </div>
+                                                            <div class="mb-2">
+                                                                <label for="manual-backup-retention" class="form-label form-label-sm">Manual Backups</label>
+                                                                <input type="number" class="form-control form-control-sm" id="manual-backup-retention" name="manual_backup_retention" min="1" value="20">
+                                                            </div>
+                                                            <div class="mb-0">
+                                                                <label for="update-backup-retention" class="form-label form-label-sm">Pre-Update Backups</label>
+                                                                <input type="number" class="form-control form-control-sm" id="update-backup-retention" name="update_backup_retention" min="1" value="5">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Compression Settings -->
+                                <div class="card mb-4 border-secondary">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-compress me-2"></i> Compression Settings
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="enable-compression" class="form-label">Compression</label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="enable-compression" name="enable_compression" checked>
+                                                        <label class="form-check-label" for="enable-compression">Enable backup compression</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="compression-method" class="form-label">Compression Method</label>
+                                                    <select class="form-select" id="compression-method" name="compression_method">
+                                                        <option value="zip">ZIP</option>
+                                                        <option value="tar.gz">TAR.GZ</option>
+                                                        <option value="7z">7-Zip</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="compression-level" class="form-label">Compression Level</label>
+                                                    <div class="range">
+                                                        <input type="range" class="form-range" id="compression-level" name="compression_level" min="1" max="9" value="5">
+                                                        <div class="d-flex justify-content-between">
+                                                            <span class="small">Faster</span>
+                                                            <span class="small">Balanced</span>
+                                                            <span class="small">Smaller</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Advanced Options</label>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="split-backups" name="split_backups">
+                                                        <label class="form-check-label" for="split-backups">Split large backups into multiple files</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="exclude-logs" name="exclude_logs">
+                                                        <label class="form-check-label" for="exclude-logs">Exclude log files from compression</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Backup Verification Options -->
+                                <div class="card mb-4 border-secondary">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-check-circle me-2"></i> Backup Verification Options
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="enable-verification" class="form-label">Verification</label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="enable-verification" name="enable_verification" checked>
+                                                        <label class="form-check-label" for="enable-verification">Enable backup verification</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="verification-method" class="form-label">Verification Method</label>
+                                                    <select class="form-select" id="verification-method" name="verification_method">
+                                                        <option value="checksum">Checksum Validation</option>
+                                                        <option value="test-extract">Test Extraction</option>
+                                                        <option value="full-test">Full Test Restore</option>
+                                                    </select>
+                                                    <div class="form-text">Method used to verify backup integrity</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="verification-frequency" class="form-label">Verification Frequency</label>
+                                                    <select class="form-select" id="verification-frequency" name="verification_frequency">
+                                                        <option value="after-backup">After Each Backup</option>
+                                                        <option value="daily">Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                        <option value="monthly">Monthly</option>
+                                                    </select>
+                                                    <div class="form-text">How often backups should be verified</div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Verification Actions</label>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="auto-repair" name="auto_repair">
+                                                        <label class="form-check-label" for="auto-repair">Attempt automatic repair of corrupted backups</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="recreate-failed" name="recreate_failed" checked>
+                                                        <label class="form-check-label" for="recreate-failed">Recreate backup if verification fails</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <h6 class="border-bottom pb-2">Notification Settings</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" id="notify-success" name="notify_success">
+                                                    <label class="form-check-label" for="notify-success">
+                                                        Notify on successful verification
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" id="notify-failure" name="notify_failure" checked>
+                                                    <label class="form-check-label" for="notify-failure">
+                                                        Notify on verification failure
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="notification-method" class="form-label">Notification Method</label>
+                                                    <select class="form-select" id="notification-method" name="notification_method">
+                                                        <option value="discord">Discord Webhook</option>
+                                                        <option value="email">Email</option>
+                                                        <option value="both">Both Discord and Email</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="email-recipient" class="form-label">Email Recipient</label>
+                                                    <input type="email" class="form-control" id="email-recipient" name="email_recipient" placeholder="admin@example.com">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for handling form interactions -->
+<script>
+    $(document).ready(function() {
+        // Toggle visibility of options based on backup frequency
+        $('#backup-frequency').change(function() {
+            const frequency = $(this).val();
+            
+            if (frequency === 'weekly') {
+                $('#weekly-options').show();
+                $('#monthly-options').hide();
+                $('#custom-interval').hide();
+            } else if (frequency === 'monthly') {
+                $('#weekly-options').hide();
+                $('#monthly-options').show();
+                $('#custom-interval').hide();
+            } else if (frequency === 'custom') {
+                $('#weekly-options').hide();
+                $('#monthly-options').hide();
+                $('#custom-interval').show();
+            } else {
+                $('#weekly-options').hide();
+                $('#monthly-options').hide();
+                $('#custom-interval').hide();
+            }
+        });
+        
+        // Initial trigger for backup frequency
+        $('#backup-frequency').trigger('change');
+        
+        // Toggle compression related fields
+        $('#enable-compression').change(function() {
+            const isEnabled = $(this).prop('checked');
+            $('#compression-method, #compression-level').prop('disabled', !isEnabled);
+        });
+        
+        // Toggle verification related fields
+        $('#enable-verification').change(function() {
+            const isEnabled = $(this).prop('checked');
+            $('#verification-method, #verification-frequency').prop('disabled', !isEnabled);
+        });
+    });
+</script>
+{% endblock %}
